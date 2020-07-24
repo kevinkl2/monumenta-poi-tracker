@@ -107,7 +107,6 @@ def parseLogs():
         printStore()
 
         for line in reversed(open(os.getenv("LATEST")).readlines()):
-            print(line)
             parseLine(line, updated)
 
         time.sleep(1)
@@ -132,9 +131,6 @@ def readFromFile():
         print(e)
 
 if __name__ == "__main__":
-    print("Loading .env")
     load_dotenv()
-    print("Reading from json")
     readFromFile()
-    print("Parsing logs")
     parseLogs()
