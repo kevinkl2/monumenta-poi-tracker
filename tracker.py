@@ -121,11 +121,14 @@ def writeToFile():
     f.close()
 
 def readFromFile():
-    f = open("timers.json", "r")
-    poiFileData = json.loads(f.read())
+    try:
+        f = open("timers.json", "r")
+        poiFileData = json.loads(f.read())
 
-    for poi in poiFileData:
-        poiStore[poi] = datetime.datetime.strptime(poiFileData[poi], "%Y-%m-%d %H:%M:%S")  
+        for poi in poiFileData:
+            poiStore[poi] = datetime.datetime.strptime(poiFileData[poi], "%Y-%m-%d %H:%M:%S")  
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
     load_dotenv()
