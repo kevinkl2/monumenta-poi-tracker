@@ -29,7 +29,7 @@ def clear():
     else: 
         _ = system('clear')
 
-def updateStore(name, line):
+def updateStore(name, line, logFormat):
     try:
         if ("minutes" in line) and ("seconds" in line):
             pattern = r"\[(.*?)\] .* in (.+?) minutes and (.+?) seconds"
@@ -68,12 +68,19 @@ def updateStore(name, line):
             timestamp, seconds = matches[0]
             minutes = 0
 
-        timestamp = datetime.datetime.strptime(timestamp, "%H:%M:%S")
+        if (logFormat == "FORTE"):
+            timestampFormat = "%d%b%Y %H:%M:%S.%f"
+        else:
+            timestampFormat = "%H:%M:%S"
+
+        timestamp = datetime.datetime.strptime(timestamp, timestampFormat)
+        timestamp = timestamp.replace(year=1900,day=1,month=1)
         delta = datetime.timedelta(minutes=int(minutes), seconds=int(seconds))
 
         timestamp = timestamp+delta
 
         poiStore[name] = timestamp
+
         writeToFile()
     except Exception as e:
         print(e)
@@ -92,14 +99,19 @@ def printStore():
                 description = "FALSE"
             print("{:>20}: {:>12} {}{:>12}\x1b[0m".format(poi, poiStore[poi].strftime("%I:%M %p"), color, description))
 
-def parseLine(line, updated):
+def parseLine(line, updated, logFormat):
     for poi in poiList:
-        if ("[main/INFO]: [CHAT] {}".format(poi) in line.rstrip()):
+        if (logFormat == "FORTE"):
+            prefix = "[Render thread/INFO] [net.minecraft.client.gui.NewChatGui/]: [CHAT]"
+        else:
+            prefix = "[main/INFO]: [CHAT]"
+
+        if ("{} {}".format(prefix, poi) in line.rstrip()):
             if poi not in updated:
                 updated.append(poi)
-                updateStore(poi, line.rstrip())
+                updateStore(poi, line.rstrip(), logFormat)
 
-def parseLogs():
+def parseLogs(logFormat):
     while(True):
         updated = []
 
@@ -107,7 +119,7 @@ def parseLogs():
         printStore()
 
         for line in reversed(open(os.getenv("LATEST")).readlines()):
-            parseLine(line, updated)
+            parseLine(line, updated, logFormat)
 
         time.sleep(1)
 
@@ -132,5 +144,9 @@ def readFromFile():
 
 if __name__ == "__main__":
     load_dotenv()
+    if (os.getenv("FORTE") == "true"):
+        logFormat = "FORTE"
+    else:
+        logFormat = "NORMAL"
     readFromFile()
-    parseLogs()
+    parseLogs(logFormat)
